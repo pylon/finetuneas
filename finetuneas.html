@@ -15,7 +15,7 @@
 <!-- BEGIN container -->
 <div class="container-fluid">
     <!-- BEGIN directions -->
-    <div class="row b-header">
+    <div class="row b-header fixed-top">
         <div class="col-sm">
             <p class="logo-text">finetuneas</p>
             <!-- BEGIN player -->
@@ -403,6 +403,8 @@
 
             document.getElementById(getStringID(i, "increase", "end")).addEventListener("click", increaseClick);
             document.getElementById(getStringID(i, "decrease", "end")).addEventListener("click", decreaseClick);
+
+            document.getElementById(getStringID(i, "merge")).addEventListener("click", mergeCells);
         }
         document.getElementById("stop").addEventListener("click", stopOverlay);
         document.getElementById("buttonShowID").addEventListener("click", changeShowID);
@@ -487,7 +489,7 @@
         document.getElementById(element).innerHTML = text;
     }
 
-    function updateTimeForSegment(segment_position = "begin") {
+    function updateTimeForSegment(i, segment_position = "begin") {
         if (i == null) {
             for (var i = 0; i < fragments.length; i++) {
                 var position = fragments[i][segment_position];
@@ -500,11 +502,11 @@
     }
 
 
-    function updateTime(i, segment_position = "begin") {
+    function updateTime(i = null, segment_position = "begin") {
         if (segment_position === "begin") {
-            updateTimeForSegment("begin")
+            updateTimeForSegment(i, "begin")
         } else {
-            updateTimeForSegment("end")
+            updateTimeForSegment(i, "end")
         }
     }
 
@@ -572,6 +574,10 @@
             row += '<div class="col" style="display: table-cell; vertical-align: middle;" id="' + getStringID(i, "cell") + '"><a class="text" id="' + getStringID(i, "text") + '">' + text + '<\/a><\/div>';
             row += '<div class="edit col-4">';
 
+            row += '<div style="display:block;">';
+            row += '<a class="merge" id="' + getStringID(i, "merge") + '">\u2191 Merge<\/a>';
+            row += "<\/div>";
+
             row += '<div style="display:block;margin-bottom:10px;">';
             row += '<p style="display:inline;" class="adjust-label">Start</p>';
             row += '<a class="time" id="' + getStringID(i, "time", "begin") + '">' + formatTime(begin) + '<\/a>';
@@ -610,6 +616,22 @@
         }
     }
 
+    function mergeCells(evt) {
+        var index = getID(evt.target.id);
+
+        var current = fragments[index];
+        var last = fragments[index-1];
+        var lines = last.lines;
+        var finalLine = last.lines[lines.length-1];
+        // last.lines[lines.length-1] = finalLine + ".";
+        last.lines = lines.concat(current.lines);
+        last.end = current.end;
+        fragments.splice(index, 1);
+
+        prepareTable();
+        prepareControls();
+    }
+
     function fragmentClick(evt) {
         highlight(CLEAR);
         currentIndex = getID(evt.target.id);
@@ -632,12 +654,17 @@
             if (fragments[i].begin < 0) {
                 fragments[i].begin = 0.00;
             }
+            var a = i - 1;
+            /* fragments[a].begin = roundTimeValue(fragments[a].begin + step); */
+            fragments[a].end = roundTimeValue(fragments[a].end + step);
+            /* updateTime(a, "begin") */
+            updateTime(a, "end")
             updateTime(i, "begin");
             highlight(CLEAR);
             currentIndex = i;
             playOverlay(0);
         } else {
-            /* increase/decrease begin*/
+            /* increase/decrease end*/
             fragments[i].end = roundTimeValue(fragments[i].end + step);
             if (fragments[i].end < 0) {
                 fragments[i].end = 0.00;
@@ -645,10 +672,18 @@
             /*if (i > 0) {
                 fragments[i - 1].end = fragments[i].begin;
             }*/
+            /* var a = i + 1; */
             updateTime(i, "end");
+
             highlight(CLEAR);
             currentIndex = i;
             playOverlay(0);
+            for (var a = i + 1; a < fragments.length; a++) {
+                fragments[a].begin = roundTimeValue(fragments[a].begin + step);
+                updateTime(a, "begin");
+                fragments[a].end = roundTimeValue(fragments[a].end + step);
+                updateTime(a, "end");
+            };
         }
 
     }
@@ -676,6 +711,7 @@
 
     function downloadClick() {
         var outputFormat = document.getElementById("outputFormat").value;
+        updateFragments();
         var data = null;
         switch (outputFormat) {
             case "csv":
@@ -715,6 +751,13 @@
         var suggestedFileName = "tuned." + outputFormat;
         var fileName = prompt(message, suggestedFileName);
         triggerDownload(data, fileName);
+    }
+
+    function updateFragments() {
+        for (var i = 0; i < fragments.length; ++i) {
+            text = document.getElementById(getStringID(i, "text")).innerHTML.replace(/<br>/g, " ")
+            fragments[i].lines = [text]
+        }
     }
 
     function downloadCSV() {

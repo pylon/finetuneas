@@ -20,6 +20,11 @@ select {
 .b-header {
     margin-top: 15px;
     margin-bottom: 15px;
+    position: fixed;
+    z-index: 99;
+    background: white;
+    padding: 10px 0;
+    width: 100%;
 }
 
 .b-header .sidebar-menu {
@@ -52,6 +57,13 @@ select {
 .b-content .settings {
     background-color: #ffffff;
     padding-left: 15px;
+    position: fixed;
+    top: 75px;
+    padding-right: 100px;
+}
+
+#fragments {
+    margin-top: 75px;
 }
 
 .b-content .tg {
@@ -104,7 +116,8 @@ select {
 
 .pause,
 .increase,
-.decrease {
+.decrease,
+.merge {
     display: inline-block;
     font-family: 'Lato', sans-serif;
     cursor: pointer;
@@ -116,6 +129,15 @@ select {
     margin-right: 5px;
     margin-left: 5px;
     padding-right:6px;
+}
+
+.merge {
+    width: 75px;
+    border-radius: 10%;
+    margin-bottom: 10px;
+    color: #ffffff !important;
+    background-color: #abbefc;
+    border: 1px solid #abbefc;
 }
 
 .increase {
